@@ -152,7 +152,7 @@ export function ManageApi() {
       setIsCreating(true)
       setError('')
       
-      const response = await apiService.post('/apilinks', {
+      await apiService.post('/apilinks', {
         matchId: createFormData.matchId,
         type: createFormData.type
       })

@@ -1,8 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
-import type { ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { authService } from '@/services/auth.service'
 
-// Temporary interface definitions to bypass import issue
 interface User {
   _id: string
   firstName: string
@@ -12,76 +10,53 @@ interface User {
   updatedAt: string
 }
 
-interface LoginCredentials {
-  email: string
-  password: string
-}
-
-interface AuthState {
+interface AuthContextType {
   user: User | null
-  token: string | null
   isAuthenticated: boolean
-}
-
-interface AuthContextType extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<void>
-  logout: () => void
   loading: boolean
+  login: (email: string, password: string) => Promise<void>
+  logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-interface AuthProviderProps {
-  children: ReactNode
-}
-
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    token: null,
-    isAuthenticated: false,
-  })
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Initialize auth state on mount
   useEffect(() => {
-    const initializeAuth = () => {
-      const state = authService.getAuthState()
-      setAuthState(state)
-      setLoading(false)
+    const token = localStorage.getItem('authToken')
+    if (token) {
+      // You could validate the token here if needed
+      setUser(JSON.parse(localStorage.getItem('user') || 'null'))
     }
-
-    initializeAuth()
+    setLoading(false)
   }, [])
 
-  const login = async (credentials: LoginCredentials) => {
+  const login = async (email: string, password: string) => {
     try {
-      setLoading(true)
-      await authService.login(credentials)
-      const newState = authService.getAuthState()
-      setAuthState(newState)
+      const response = await authService.login({ email, password })
+      setUser(response.user)
+      localStorage.setItem('authToken', response.token)
+      localStorage.setItem('user', JSON.stringify(response.user))
     } catch (error) {
       console.error('Login failed:', error)
       throw error
-    } finally {
-      setLoading(false)
     }
   }
 
   const logout = () => {
-    authService.logout()
-    setAuthState({
-      user: null,
-      token: null,
-      isAuthenticated: false,
-    })
+    setUser(null)
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('user')
   }
 
-  const value: AuthContextType = {
-    ...authState,
+  const value = {
+    user,
+    isAuthenticated: !!user,
+    loading,
     login,
     logout,
-    loading,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

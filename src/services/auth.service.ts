@@ -38,14 +38,8 @@ class AuthService {
       const response = await apiService.post<LoginResponse>('/auth/login', credentials)
       
       console.log('Login response:', response)
-      console.log('Response type:', typeof response)
-      console.log('Response keys:', Object.keys(response))
-      console.log('Response.success:', response.success)
-      console.log('Response.data:', response.data)
-      console.log('Response.token:', response.token)
-      console.log('Response.user:', response.user)
       
-      // Handle different response formats
+      // Handle the response structure
       if (response.success && response.data) {
         const { token, user } = response.data
         console.log('Using data.token and data.user')
@@ -55,22 +49,8 @@ class AuthService {
         this.setUser(user)
         
         return response.data
-      } else if (response.success && response.token && response.user) {
-        // Direct response format
-        const { token, user } = response
-        console.log('Using direct token and user')
-        
-        // Store token and user data
-        this.setToken(token)
-        this.setUser(user)
-        
-        return response
       } else {
         console.log('Response validation failed')
-        console.log('response.success:', response.success)
-        console.log('response.data:', response.data)
-        console.log('response.token:', response.token)
-        console.log('response.user:', response.user)
         throw new Error(response.message || 'Login failed - invalid response format')
       }
     } catch (error) {
