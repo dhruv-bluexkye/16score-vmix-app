@@ -19,7 +19,7 @@ export function LoginPage() {
     setSuccess('')
     
     try {
-      await login({ email, password })
+      await login(email, password)
       setSuccess('Login successful! Redirecting...')
       console.log('Login successful!')
     } catch (err) {
